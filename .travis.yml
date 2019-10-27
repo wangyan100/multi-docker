@@ -1,0 +1,29 @@
+
+# to tell travis ci , need sudo user right
+sudo: required
+services:
+  # travis will create a docker container
+  - docker
+
+before_install:
+  # -t will tag image with tagname wangyan100/docker-react
+  - docker build -t wangyan100/react-test -f ./client/Dockerfile.dev ./client
+
+# script section is the script for running test
+script:
+  # -- --converage is the trick to let npm run test to return result with test converage report, otherwise it will hang there wait for input from user
+  - docker run -e CI=true wangyan100/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t wangyan100/multi-client  ./client
+  - docker build -t wangyan100/multi-nginx   ./nginx
+  - docker build -t wangyan100/multi-server   ./server
+  - docker build -t wangyan100/multi-worker   ./worker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --passowrd-stdin
+  - docker push wangyan100/multi-client
+  - docker push wangyan100/multi-nginx
+  - docker push wangyan100/multi-server
+  - docker push wangyan100/multi-worker
+# login docker CLI
+
+
